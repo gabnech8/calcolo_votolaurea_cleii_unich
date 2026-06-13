@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calcolatore Voto di Laurea</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:     #14141f;
+    --card:   #1c1c2e;
+    --card2:  #23233a;
+    --card3:  #2a2a44;
+    --border: #32325a;
+    --text:   #cdd6f4;
+    --muted:  #6c7086;
+    --dim:    #9399b2;
+    --blue:   #89b4fa;
+    --green:  #a6e3a1;
+    --yellow: #f9e2af;
+    --red:    #f38ba8;
+    --purple: #cba6f7;
+  }
+
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh; padding: 28px 16px 60px;
+  }
+
+  .container { max-width: 780px; margin: 0 auto; }
+
+  /* Header */
+  .header { text-align: center; margin-bottom: 28px; }
+  .header h1 { font-size: 1.45rem; font-weight: 800; letter-spacing: -.03em; }
+  .header p  { font-size: .82rem; color: var(--muted); margin-top: 5px; }
+
+  /* Cards */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 18px; padding: 20px; margin-bottom: 14px;
+  }
+  .card-title {
+    font-size: .65rem; font-weight: 800;
+    letter-spacing: .13em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 18px;
+  }
+
+  /* Add form */
+  .add-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .add-row .in-name { flex: 1; min-width: 150px; }
+  .add-row .in-cfu  { width: 76px; }
+
+  input[type="text"], input[type="number"] {
+    width: 100%; background: var(--card2); border: 1.5px solid var(--border);
+    border-radius: 10px; padding: 11px 13px;
+    color: var(--text); font-size: .88rem; outline: none; transition: border-color .2s;
+  }
+  input[type="text"]:focus, input[type="number"]:focus { border-color: var(--blue); }
+  input::placeholder { color: var(--muted); }
+
+  .btn-add {
+    background: var(--blue); color: #12121e;
+    border: none; border-radius: 10px; padding: 11px 20px;
+    font-size: .88rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+    transition: opacity .15s, transform .1s;
+  }
+  .btn-add:hover { opacity: .88; }
+  .btn-add:active { transform: scale(.97); }
+
+  /* Exam rows */
+  .empty-msg { text-align: center; color: var(--muted); font-size: .84rem; padding: 22px 0; }
+
+  .exam-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 0; border-bottom: 1px solid var(--border);
+  }
+  .exam-row:last-child { border-bottom: none; padding-bottom: 2px; }
+
+  .exam-name {
+    flex: 1; font-size: .88rem; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; min-width: 80px;
+  }
+  .exam-name.sostenuto { color: var(--green); }
+
+  .cfu-tag {
+    font-size: .72rem; color: var(--muted);
+    background: var(--card3); border-radius: 6px; padding: 3px 7px; white-space: nowrap;
+  }
+
+  .slider-area { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    width: 110px; height: 4px; border-radius: 2px; outline: none; cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+    background: var(--blue); box-shadow: 0 0 7px rgba(137,180,250,.55);
+    cursor: pointer; transition: box-shadow .2s;
+  }
+  input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 12px rgba(137,180,250,.8); }
+  input[type="range"]::-moz-range-thumb {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--blue); border: none; cursor: pointer;
+  }
+
+  .grade-val { font-weight: 700; font-size: .95rem; color: var(--text); min-width: 32px; text-align: center; }
+  .grade-val.lode { color: var(--green); }
+
+  .lode-label {
+    display: flex; align-items: center; gap: 3px;
+    font-size: .72rem; color: var(--green); cursor: pointer; user-select: none;
+  }
+  .lode-label.hidden { visibility: hidden; pointer-events: none; }
+  .lode-label input[type="checkbox"] {
+    width: 13px; height: 13px; accent-color: var(--green); cursor: pointer; padding: 0;
+  }
+
+  .done-btn {
+    background: none; border: 1.5px solid var(--border); border-radius: 8px;
+    padding: 4px 9px; font-size: .7rem; color: var(--muted);
+    cursor: pointer; white-space: nowrap; transition: all .2s;
+  }
+  .done-btn.active { border-color: var(--green); color: var(--green); background: rgba(166,227,161,.08); }
+
+  .del-btn {
+    background: none; border: none; color: var(--muted); font-size: .88rem;
+    cursor: pointer; padding: 4px 5px; border-radius: 6px; line-height: 1;
+    transition: color .2s; flex-shrink: 0;
+  }
+  .del-btn:hover { color: var(--red); }
+
+  /* Commission rows */
+  .comm-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 13px 0; border-bottom: 1px solid var(--border);
+  }
+  .comm-row:last-child { border-bottom: none; }
+
+  .comm-label { flex: 1; font-size: .88rem; }
+  .comm-sub   { font-size: .73rem; color: var(--muted); margin-top: 2px; }
+  .comm-badge { font-size: .76rem; color: var(--muted); white-space: nowrap; }
+  .comm-val   { font-weight: 700; font-size: 1rem; color: var(--blue); min-width: 28px; text-align: right; }
+
+  /* Toggle switch */
+  .toggle-wrap { display: flex; align-items: center; gap: 10px; }
+  .switch { position: relative; display: inline-block; width: 46px; height: 25px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .knob {
+    position: absolute; inset: 0; background: var(--card3);
+    border: 1.5px solid var(--border); border-radius: 13px; cursor: pointer; transition: .25s;
+  }
+  .knob::before {
+    content: ''; position: absolute; width: 17px; height: 17px;
+    left: 3px; top: 3px; background: var(--muted); border-radius: 50%; transition: .25s;
+  }
+  .switch input:checked + .knob { background: rgba(137,180,250,.12); border-color: var(--blue); }
+  .switch input:checked + .knob::before { background: var(--blue); transform: translateX(21px); }
+  .toggle-text       { font-size: .88rem; color: var(--muted); transition: color .2s; }
+  .toggle-text.on    { color: var(--blue); font-weight: 600; }
+
+  /* Stats */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 11px; }
+  .stat-box { background: var(--card2); border-radius: 13px; padding: 16px 10px; text-align: center; }
+  .stat-lbl { font-size: .72rem; color: var(--muted); margin-bottom: 10px; line-height: 1.35; }
+  .stat-num { font-size: 2rem; font-weight: 800; letter-spacing: -.04em; color: var(--text); line-height: 1; }
+  .stat-sub { font-size: .7rem; color: var(--muted); margin-top: 5px; }
+  .badge {
+    display: inline-block; border-radius: 7px; padding: 3px 9px;
+    font-size: .68rem; font-weight: 800; letter-spacing: .06em;
+    text-transform: uppercase; margin-top: 8px;
+  }
+  .b-blue   { background: rgba(137,180,250,.18); color: var(--blue); }
+  .b-green  { background: rgba(166,227,161,.18); color: var(--green); }
+  .b-yellow { background: rgba(249,226,175,.18); color: var(--yellow); }
+  .b-purple { background: rgba(203,166,247,.18); color: var(--purple); }
+  .b-red    { background: rgba(243,139,168,.18); color: var(--red); }
+
+  .btn-reset {
+    background: none; border: 1.5px solid var(--border); border-radius: 8px;
+    padding: 6px 14px; font-size: .78rem; color: var(--muted);
+    cursor: pointer; transition: all .2s; white-space: nowrap;
+  }
+  .btn-reset:hover { border-color: var(--red); color: var(--red); }
+
+  .header-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 6px; }
+
+  @media (max-width: 580px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .slider-area input[type="range"] { width: 80px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Disclaimer -->
+  <p style="text-align:center; font-size:.73rem; color:var(--muted); line-height:1.6; margin-bottom:20px; padding: 0 8px;">
+    Progetto indipendente, non affiliato né approvato dall'Università degli Studi "G. D'Annunzio" di Chieti-Pescara.
+    I calcoli sono basati sul Regolamento Didattico CLEII (coorte 2023/2024) e hanno scopo puramente orientativo.
+    Per informazioni ufficiali fare riferimento alla Segreteria Studenti o al sito di Ateneo.
+  </p>
+
+  <header class="header">
+    <div class="header-row">
+      <h1>🎓 Calcolatore Voto di Laurea</h1>
+      <button class="btn-reset" onclick="resetAll()" title="Cancella tutti i dati salvati">Azzera tutto</button>
+    </div>
+    <p>Inserisci i tuoi esami, regola i voti e guarda le statistiche aggiornarsi in tempo reale</p>
+  </header>
+
+  <!-- Add exam -->
+  <div class="card">
+    <div class="card-title">Aggiungi Esame</div>
+    <div class="add-row">
+      <div class="in-name"><input type="text"   id="in-name" placeholder="Nome esame…" /></div>
+      <div class="in-cfu"> <input type="number" id="in-cfu"  placeholder="CFU" min="1" max="20" /></div>
+      <button class="btn-add" onclick="addExam()">+ Aggiungi</button>
+    </div>
+  </div>
+
+  <!-- Exam list -->
+  <div class="card">
+    <div class="card-title">Esami</div>
+    <div id="exam-list"><div class="empty-msg">Nessun esame inserito — inizia aggiungendone uno qui sopra.</div></div>
+  </div>
+
+  <!-- Commission -->
+  <div class="card">
+    <div class="card-title">Punteggi Commissione</div>
+
+    <!-- In corso / Fuori corso -->
+    <div class="comm-row">
+      <div class="comm-label">
+        Stato carriera
+        <div class="comm-sub">Cambia il massimo del punteggio curriculum (regolamento Art. 9)</div>
+      </div>
+      <div class="toggle-wrap">
+        <span class="toggle-text" id="lbl-fuori">Fuori corso</span>
+        <label class="switch">
+          <input type="checkbox" id="incorso" checked onchange="onStatus()">
+          <div class="knob"></div>
+        </label>
+        <span class="toggle-text on" id="lbl-corso">In corso</span>
+      </div>
+    </div>
+
+    <!-- Thesis -->
+    <div class="comm-row">
+      <div class="comm-label">
+        Punteggio elaborato (tesi)
+        <div class="comm-sub">Assegnato dalla commissione all'elaborato finale</div>
+      </div>
+      <span class="comm-badge">max 6</span>
+      <input type="range" id="thesis-sl" min="0" max="6" step="1" value="0"
+             oninput="onThesis(this)" style="width:110px">
+      <div class="comm-val" id="thesis-val">0</div>
+    </div>
+
+    <!-- Curriculum -->
+    <div class="comm-row">
+      <div class="comm-label">
+        Punteggio percorso (curriculum)
+        <div class="comm-sub" id="curr-sub">Valutazione della carriera · max 4 (in corso)</div>
+      </div>
+      <span class="comm-badge" id="curr-badge">max 4</span>
+      <input type="range" id="curr-sl" min="0" max="4" step="1" value="0"
+             oninput="onCurr(this)" style="width:110px">
+      <div class="comm-val" id="curr-val">0</div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="card">
+    <div class="card-title">Statistiche</div>
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-lbl">Media attuale</div>
+        <div class="stat-num" id="s-att">—</div>
+        <div class="stat-sub">su /30</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-lbl">Media finale</div>
+        <div class="stat-num" id="s-fin">—</div>
+        <div class="stat-sub">su /30</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-lbl">Base /110</div>
+        <div class="stat-num" id="s-base">—</div>
+        <div class="stat-sub">arrotondata</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-lbl">Voto finale</div>
+        <div class="stat-num" id="s-voto">—</div>
+        <span class="badge" id="s-badge" style="display:none"></span>
+      </div>
+    </div>
+  </div>
+
+
+</div>
+
+<script>
+let exams = [];
+let uid   = 1;
+
+const STORAGE_KEY = 'calcolatore-laurea-v1';
+
+function saveState() {
+  const state = {
+    exams,
+    uid,
+    thesis:  document.getElementById('thesis-sl').value,
+    curr:    document.getElementById('curr-sl').value,
+    incorso: document.getElementById('incorso').checked
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    exams = s.exams || [];
+    uid   = s.uid   || (exams.length ? Math.max(...exams.map(e => e.id)) + 1 : 1);
+    document.getElementById('incorso').checked  = s.incorso !== false;
+    document.getElementById('thesis-sl').value  = s.thesis || 0;
+    document.getElementById('curr-sl').value    = s.curr   || 0;
+    onStatus();
+    setFill(document.getElementById('thesis-sl'), 0, 6, +s.thesis || 0);
+    render();
+    updateStats();
+  } catch(e) { /* ignore corrupt data */ }
+}
+
+function resetAll() {
+  if (!confirm('Sei sicuro? Verranno eliminati tutti gli esami e i punteggi salvati.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  exams = []; uid = 1;
+  document.getElementById('incorso').checked = true;
+  document.getElementById('thesis-sl').value = 0;
+  document.getElementById('curr-sl').value   = 0;
+  onStatus();
+  setFill(document.getElementById('thesis-sl'), 0, 6, 0);
+  render(); updateStats();
+}
+
+/* ── Add / Remove ── */
+function addExam() {
+  const nEl = document.getElementById('in-name');
+  const cEl = document.getElementById('in-cfu');
+  const name = nEl.value.trim();
+  const cfu  = parseInt(cEl.value);
+  if (!name)                    { nEl.focus(); return; }
+  if (!cfu || cfu < 1 || cfu > 20) { cEl.focus(); return; }
+
+  exams.push({ id: uid++, name, cfu, grade: 24, lode: false, done: false });
+  nEl.value = ''; cEl.value = ''; nEl.focus();
+  render(); updateStats(); saveState();
+}
+
+function removeExam(id) {
+  exams = exams.filter(e => e.id !== id);
+  render(); updateStats(); saveState();
+}
+
+/* ── Exam interactions ── */
+function onSlide(id, val) {
+  const e = exams.find(x => x.id === id);
+  if (!e) return;
+  e.grade = +val;
+  if (e.grade < 30) e.lode = false;
+
+  const gEl = document.getElementById('gv-' + id);
+  if (gEl) {
+    gEl.textContent = (e.lode && e.grade === 30) ? '30L' : e.grade;
+    gEl.className   = 'grade-val' + (e.lode ? ' lode' : '');
+  }
+  const lEl = document.getElementById('ll-' + id);
+  if (lEl) {
+    lEl.className = 'lode-label' + (e.grade === 30 ? '' : ' hidden');
+    if (e.grade < 30) {
+      const cb = document.getElementById('lc-' + id);
+      if (cb) cb.checked = false;
+    }
+  }
+  setFill(document.getElementById('sl-' + id), 18, 30, +val);
+  updateStats(); saveState();
+}
+
+function onLode(id, checked) {
+  const e = exams.find(x => x.id === id);
+  if (!e) return;
+  e.lode = checked;
+  const gEl = document.getElementById('gv-' + id);
+  if (gEl) {
+    gEl.textContent = checked ? '30L' : '30';
+    gEl.className   = 'grade-val' + (checked ? ' lode' : '');
+  }
+  updateStats(); saveState();
+}
+
+function onDone(id) {
+  const e = exams.find(x => x.id === id);
+  if (!e) return;
+  e.done = !e.done;
+  const btn = document.getElementById('db-' + id);
+  const nm  = document.getElementById('nm-' + id);
+  if (btn) { btn.textContent = e.done ? '✓ Sostenuto' : 'Segna fatto'; btn.className = 'done-btn' + (e.done ? ' active' : ''); }
+  if (nm)  { nm.className = 'exam-name' + (e.done ? ' sostenuto' : ''); }
+  updateStats(); saveState();
+}
+
+/* ── Commission ── */
+function onStatus() {
+  const inCorso = document.getElementById('incorso').checked;
+  const max = inCorso ? 4 : 2;
+
+  // update labels
+  document.getElementById('lbl-corso').className  = 'toggle-text' + (inCorso ? ' on' : '');
+  document.getElementById('lbl-fuori').className  = 'toggle-text' + (!inCorso ? ' on' : '');
+  document.getElementById('curr-badge').textContent = 'max ' + max;
+  document.getElementById('curr-sub').textContent   =
+    'Valutazione della carriera · max ' + max + (inCorso ? ' (in corso)' : ' (fuori corso)');
+
+  // clamp slider
+  const sl = document.getElementById('curr-sl');
+  sl.max = max;
+  if (+sl.value > max) sl.value = max;
+  setFill(sl, 0, max, +sl.value);
+  document.getElementById('curr-val').textContent = sl.value;
+  updateStats(); saveState();
+}
+
+function onThesis(sl) {
+  document.getElementById('thesis-val').textContent = sl.value;
+  setFill(sl, 0, 6, +sl.value);
+  updateStats(); saveState();
+}
+
+function onCurr(sl) {
+  const max = document.getElementById('incorso').checked ? 4 : 2;
+  document.getElementById('curr-val').textContent = sl.value;
+  setFill(sl, 0, max, +sl.value);
+  updateStats(); saveState();
+}
+
+/* ── Slider fill ── */
+function setFill(sl, min, max, val) {
+  if (!sl) return;
+  const pct = max > min ? ((val - min) / (max - min)) * 100 : 0;
+  sl.style.background =
+    `linear-gradient(to right, var(--blue) ${pct}%, var(--card3) ${pct}%)`;
+}
+
+/* ── Render exam list ── */
+function render() {
+  const c = document.getElementById('exam-list');
+  if (!exams.length) {
+    c.innerHTML = '<div class="empty-msg">Nessun esame inserito — inizia aggiungendone uno qui sopra.</div>';
+    return;
+  }
+  c.innerHTML = exams.map(e => {
+    const pct = ((e.grade - 18) / 12) * 100;
+    const bg  = `linear-gradient(to right, var(--blue) ${pct}%, var(--card3) ${pct}%)`;
+    return `
+<div class="exam-row">
+  <div class="exam-name ${e.done ? 'sostenuto' : ''}" id="nm-${e.id}">${e.name}</div>
+  <span class="cfu-tag">${e.cfu} CFU</span>
+  <div class="slider-area">
+    <input type="range" id="sl-${e.id}" min="18" max="30" step="1" value="${e.grade}"
+           style="background:${bg}" oninput="onSlide(${e.id}, this.value)">
+    <div class="grade-val ${e.lode ? 'lode' : ''}" id="gv-${e.id}">
+      ${e.lode && e.grade === 30 ? '30L' : e.grade}
+    </div>
+    <label class="lode-label ${e.grade === 30 ? '' : 'hidden'}" id="ll-${e.id}">
+      <input type="checkbox" id="lc-${e.id}" ${e.lode ? 'checked' : ''}
+             onchange="onLode(${e.id}, this.checked)"> L
+    </label>
+  </div>
+  <button class="done-btn ${e.done ? 'active' : ''}" id="db-${e.id}" onclick="onDone(${e.id})">
+    ${e.done ? '✓ Sostenuto' : 'Segna fatto'}
+  </button>
+  <button class="del-btn" onclick="removeExam(${e.id})" title="Rimuovi">✕</button>
+</div>`;
+  }).join('');
+}
+
+/* ── Stats ── */
+function updateStats() {
+  const thesis = parseInt(document.getElementById('thesis-sl').value) || 0;
+  const curr   = parseInt(document.getElementById('curr-sl').value)   || 0;
+
+  const done = exams.filter(e => e.done);
+  const all  = exams;
+
+  const doneCFU = done.reduce((s, e) => s + e.cfu, 0);
+  const doneSum = done.reduce((s, e) => s + e.grade * e.cfu, 0);
+  const allCFU  = all.reduce((s, e) => s + e.cfu, 0);
+  const allSum  = all.reduce((s, e) => s + e.grade * e.cfu, 0);
+
+  const mAtt = doneCFU > 0 ? doneSum / doneCFU : null;
+  const mFin = allCFU  > 0 ? allSum  / allCFU  : null;
+
+  const base110  = mFin !== null ? Math.ceil(mFin * 110 / 30) : null;
+  const rawFinal = base110 !== null ? base110 + thesis + curr : null;
+  const capped   = rawFinal !== null ? Math.min(110, rawFinal) : null;
+  const lodePoss = rawFinal !== null && rawFinal >= 110;
+
+  document.getElementById('s-att').textContent  = mAtt   !== null ? mAtt.toFixed(2) : '—';
+  document.getElementById('s-fin').textContent  = mFin   !== null ? mFin.toFixed(2) : '—';
+  document.getElementById('s-base').textContent = base110 !== null ? base110 : '—';
+  document.getElementById('s-voto').textContent = capped  !== null ? capped  : '—';
+
+  const bdg = document.getElementById('s-badge');
+  if (capped !== null) {
+    let txt, cls;
+    if (capped >= 110 && lodePoss) { txt = 'Lode possibile'; cls = 'b-purple'; }
+    else if (capped >= 110)        { txt = 'Eccellente';     cls = 'b-green';  }
+    else if (capped >= 106)        { txt = 'Ottimo';         cls = 'b-blue';   }
+    else if (capped >= 100)        { txt = 'Buono';          cls = 'b-yellow'; }
+    else if (capped >= 90)         { txt = 'Discreto';       cls = 'b-yellow'; }
+    else                           { txt = 'Sufficiente';    cls = 'b-red';    }
+    bdg.textContent = txt; bdg.className = 'badge ' + cls; bdg.style.display = 'inline-block';
+  } else {
+    bdg.style.display = 'none';
+  }
+}
+
+/* ── Keyboard shortcuts ── */
+document.getElementById('in-name').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('in-cfu').focus();
+});
+document.getElementById('in-cfu').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addExam();
+});
+
+/* ── Init slider fills + restore saved state ── */
+setFill(document.getElementById('thesis-sl'), 0, 6, 0);
+setFill(document.getElementById('curr-sl'),   0, 4, 0);
+loadState();
+</script>
+</body>
+</html>
